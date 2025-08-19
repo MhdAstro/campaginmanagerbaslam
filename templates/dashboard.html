@@ -1,0 +1,23 @@
+\
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2 class="h2">سلام، {{ user.name or user.username }}</h2>
+  <p class="muted">این‌جا محصولات غرفهٔ شما نمایش داده می‌شود.</p>
+
+  <div style="display:flex;gap:8px;align-items:center;margin:12px 0;">
+    <label for="per">تعداد در صفحه:</label>
+    <select id="per">
+      <option>10</option><option>20</option><option>50</option>
+    </select>
+    <button id="reload" class="btn">بروزرسانی</button>
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div id="pager" class="pager"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor-ui.js') }}" defer></script>
+{% endblock %}

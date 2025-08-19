@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پنل غرفه‌دار + کمپین</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <div class="brand">Basalam Vendor Portal</div>
+      <nav style="display:flex;gap:8px;align-items:center">
+        {% if session.get('access_token') %}
+          <span class="muted" style="font-size:12px">{{ (user and (user.name or user.username)) or '' }}</span>
+          <a href="/logout" class="btn">خروج</a>
+        {% else %}
+          <a href="/login" class="btn">ورود با باسلام</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for cat, msg in messages %}
+            <li class="flash {{cat}}">{{ msg }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

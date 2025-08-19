@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="card">
+  <h2 class="h2">{{ campaign.title }}</h2>
+  <div class="muted">{{ campaign.start_date }} تا {{ campaign.end_date }}</div>
+  {% if campaign.description %}<p style="margin-top:8px">{{ campaign.description }}</p>{% endif %}
+</section>
+
+<section class="card" style="margin-top:16px">
+  <div class="tabs">
+    <button class="tab active" data-tab="mine">انتخاب‌های من</button>
+    {% if is_admin %}
+      <button class="tab" data-tab="admin">انتخاب‌های غرفه‌دارها (ادمین)</button>
+    {% endif %}
+  </div>
+
+  <!-- Tab: mine -->
+  <div id="tab-mine" class="tab-pane active">
+    {% if not session.get('access_token') %}
+      <p class="muted">برای انتخاب محصول باید لاگین کنید.</p>
+    {% else %}
+      <div id="myList" class="grid">
+        <div class="head">کد</div><div class="head">عنوان</div><div class="head">قیمت</div><div class="head">تخفیف</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+        <button class="btn" onclick="openVendorSelector({{ campaign.id }})">افزودن/ویرایش انتخاب‌های من</button>
+      </div>
+    {% endif %}
+  </div>
+
+  {% if is_admin %}
+  <!-- Tab: admin -->
+  <div id="tab-admin" class="tab-pane">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h3 class="h3">انتخاب‌های همهٔ غرفه‌دارها</h3>
+      <button class="btn" id="refreshAdmin">بروزرسانی</button>
+    </div>
+    <div id="adminGrid" class="grid-admin" style="margin-top:8px"></div>
+  </div>
+  {% endif %}
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor-ui.js') }}" defer></script>
+<script>
+async function hydrateMySelections(campaignId){
+  const [productsRes, selectedRes] = await Promise.all([
+    fetch('/api/my-products').then(r=>r.json()),
+    fetch(`/api/campaigns/${campaignId}/my-selections`).then(r=>r.json())
+  ]);
+  const all = productsRes.data || [];
+  // selectedRes: [{product_id, discount}]
+  const selectedMap = new Map(selectedRes.map(x => [x.product_id, (x.discount||0)]));
+  const grid = document.getElementById('myList');
+  grid.innerHTML = `<div class="head">کد</div><div class="head">عنوان</div><div class="head">قیمت</div><div class="head">تخفیف</div>`;
+  all.filter(p=> selectedMap.has(p.id)).forEach(p=>{
+    const disc = selectedMap.get(p.id) || 0;
+    grid.insertAdjacentHTML('beforeend', `
+      <div class="row">
+        <div>${p.id}</div>
+        <div>${p.title || p.name || ""}</div>
+        <div>${(p.price||p.primary_price||0).toLocaleString()} تومان</div>
+        <div>${disc}%</div>
+      </div>
+    `);
+  });
+}
+
+{% if is_admin %}
+async function hydrateAdminSelections(campaignId){
+  const container = document.getElementById('adminGrid');
+  container.innerHTML = '<p class="muted">در حال بارگذاری...</p>';
+  const data = await fetch(`/api/admin/campaigns/${campaignId}/selections`).then(r=>r.json());
+  if (!data || Object.keys(data).length===0){
+    container.innerHTML = '<p class="muted">هنوز انتخابی ثبت نشده.</p>';
+    return;
+  }
+  let html = `
+    <div class="head">Vendor ID</div>
+    <div class="head">Products (٪)</div>
+  `;
+  for(const [vendorId, items] of Object.entries(data)){
+    html += `
+      <div class="row">
+        <div>${vendorId}</div>
+        <div>${items.map(p=>`<code>${p.product_id} — ${p.discount||0}%</code>`).join('، ')}</div>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+document.getElementById('refreshAdmin')?.addEventListener('click', ()=> hydrateAdminSelections({{ campaign.id }}));
+{% endif %}
+
+function bindTabs(){
+  const tabs = document.querySelectorAll('.tab');
+  const panes = {'mine': document.getElementById('tab-mine'), 'admin': document.getElementById('tab-admin')};
+  tabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      tabs.forEach(b=> b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.values(panes).forEach(p=> p?.classList.remove('active'));
+      panes[btn.dataset.tab]?.classList.add('active');
+    });
+  });
+}
+window.addEventListener('DOMContentLoaded', ()=>{
+  bindTabs();
+  hydrateMySelections({{ campaign.id }});
+  {% if is_admin %} hydrateAdminSelections({{ campaign.id }}); {% endif %}
+});
+</script>
+{% endblock %}

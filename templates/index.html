@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+
+<section class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+    <h2 class="h2">کمپین‌ها</h2>
+    <input id="searchCamp" class="input" placeholder="جستجوی عنوان کمپین...">
+  </div>
+
+  {% if campaigns %}
+    <div id="campGrid" class="grid-campaigns">
+      <div class="head">عنوان</div>
+      <div class="head">بازه</div>
+      <div class="head">عملیات</div>
+
+      {% for c in campaigns %}
+        <div class="row camp-row">
+          <div class="camp-title">{{ c.title }}</div>
+          <div>{{ c.start_date }} تا {{ c.end_date }}</div>
+          <div><a class="btn" href="{{ url_for('campaign_detail', cid=c.id) }}">مشاهده</a></div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">کمپینی وجود ندارد.</p>
+  {% endif %}
+</section>
+
+{% if is_admin %}
+<section class="card" style="margin-top:16px">
+  <h3 class="h3">ساخت کمپین (ادمین)</h3>
+  <form action="{{ url_for('admin_create_campaign') }}" method="post" class="form-grid two">
+    <div><label>عنوان</label><input class="input" name="title" required></div>
+    <div><label>شروع</label><input class="input" type="date" name="start_date" required></div>
+    <div><label>پایان</label><input class="input" type="date" name="end_date" required></div>
+    <div style="grid-column:1/-1"><label>توضیحات</label><textarea class="input" name="description"></textarea></div>
+    <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="btn">ایجاد کمپین</button></div>
+  </form>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const q = document.getElementById('searchCamp');
+const grid = document.getElementById('campGrid');
+if(q && grid){
+  q.addEventListener('input', ()=>{
+    const term = q.value.trim().toLowerCase();
+    grid.querySelectorAll('.camp-row').forEach(row=>{
+      const title = (row.querySelector('.camp-title')?.textContent || '').toLowerCase();
+      row.style.display = title.includes(term) ? 'contents' : 'none';
+    });
+  });
+}
+</script>
+{% endblock %}
