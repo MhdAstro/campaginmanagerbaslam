@@ -1,36 +1,30 @@
 # syntax=docker/dockerfile:1.6
+
+# 1. Base Image
 FROM python:3.12-slim
 
-# سرعت و پایداری پایتون/پیپ
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+# 2. Environment Variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# (اختیاری) ابزارهای لازم برای healthcheck یا دیباگ
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# دایرکتوری اپ
+# 3. Set Working Directory
 WORKDIR /app
 
-# مسیر سورس داخل ریپو (با توجه به زیپ شما)
-ARG APP_DIR=basalam_vendor_portal/basalam_vendor_portal/basalam_vendor_portal
-
-# اول فقط ریکوایرمنت‌ها تا لایه کش جدا باشد
-COPY ${APP_DIR}/requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
+# 4. Install Dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir gunicorn
 
-# سپس کل سورس (به کمک .dockerignore حجم رو کم کنید)
-COPY ${APP_DIR}/ /app/
+# 5. Copy Application Code
+# This copies everything EXCEPT what's in .dockerignore
+COPY . .
 
-# یوزر نان‌روت برای امنیت
+# 6. Create a non-root user for security
 RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
-# پورت گونیکورن
+# 7. Expose the port Gunicorn will run on
 EXPOSE 8000
 
-# اجرای اپ با گونیکورن (ماژول: app.py، آبجکت: app)
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app"]
+# 8. Run the application (using your app.py file)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
