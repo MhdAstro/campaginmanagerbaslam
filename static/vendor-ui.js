@@ -133,7 +133,14 @@ async function openVendorSelector(campaignId) {
     statusDiv.className = '';
     statusDiv.innerHTML = '<span role="img" aria-label="loading">⏳</span> در حال ذخیره انتخاب‌ها...';
     
-    const items = Array.from(chosen.entries()).map(([id, discount]) => ({ product_id: id, discount }));
+    const items = Array.from(chosen.entries()).map(([id, discount]) => {
+      const product = products.find(p => p.id == id);
+      return { 
+        product_id: id, 
+        discount,
+        title: product ? (product.title || product.name || '') : ''
+      };
+    });
     
     try {
       const res = await fetch(`/api/campaigns/${campaignId}/select-products`, {

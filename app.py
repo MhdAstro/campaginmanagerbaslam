@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS campaign_items (
   campaign_id INTEGER NOT NULL,
   vendor_id TEXT NOT NULL,
   product_id TEXT NOT NULL,
+  product_title TEXT DEFAULT '',
   discount_percent REAL DEFAULT 0,
   selected_at TEXT DEFAULT (datetime('now')),
   UNIQUE (campaign_id, vendor_id, product_id)
@@ -131,10 +132,12 @@ CREATE TABLE IF NOT EXISTS campaign_items (
 def ensure_db():
     db = get_db()
     db.executescript(SCHEMA)
-    # مایگریشن سبک: اگه ستون تخفیف وجود نداشت، اضافه‌اش کن
+    # مایگریشن سبک: اگه ستون‌های جدید وجود نداشت، اضافه‌شان کن
     cols = [r[1] for r in db.execute("PRAGMA table_info(campaign_items)").fetchall()]
     if "discount_percent" not in cols:
         db.execute("ALTER TABLE campaign_items ADD COLUMN discount_percent REAL DEFAULT 0")
+    if "product_title" not in cols:
+        db.execute("ALTER TABLE campaign_items ADD COLUMN product_title TEXT DEFAULT ''")
     db.commit()
 
 # Helpers
@@ -416,6 +419,7 @@ def api_select_products(cid: int):
     invalid = []
     for it in items:
         pid = (str(it.get("product_id") or "").strip())
+        title = (str(it.get("title", it.get("name", "")) or "")).strip()
         try:
             disc = float(it.get("discount", 0))
         except (TypeError, ValueError):
@@ -427,7 +431,7 @@ def api_select_products(cid: int):
             if disc < 3.0:
                 invalid.append({"product_id": pid, "discount": disc})
             else:
-                cleaned.append((pid, disc))
+                cleaned.append((pid, title, disc))
 
     if invalid:
         return jsonify({
@@ -440,10 +444,10 @@ def api_select_products(cid: int):
     db = get_db()
     
     db.execute("DELETE FROM campaign_items WHERE campaign_id=? AND vendor_id=?", (cid, session["vendor_id"]))
-    for pid, disc in sorted(set(cleaned)):
+    for pid, title, disc in sorted(set(cleaned)):
         db.execute(
-            "INSERT OR IGNORE INTO campaign_items (campaign_id, vendor_id, product_id, discount_percent) VALUES (?,?,?,?)",
-            (cid, session["vendor_id"], pid, disc),
+            "INSERT OR IGNORE INTO campaign_items (campaign_id, vendor_id, product_id, product_title, discount_percent) VALUES (?,?,?,?,?)",
+            (cid, session["vendor_id"], pid, title, disc),
         )
     db.commit()
     
@@ -455,15 +459,16 @@ def api_admin_campaign_selections(cid: int):
     ensure_admin()
     db = get_db()
     rows = db.execute(
-        "SELECT vendor_id, product_id, discount_percent FROM campaign_items WHERE campaign_id=? ORDER BY vendor_id",
+        "SELECT vendor_id, product_id, product_title, discount_percent FROM campaign_items WHERE campaign_id=? ORDER BY vendor_id",
         (cid,)
     ).fetchall()
     out = {}
     for r in rows:
+        title = r["product_title"] if r["product_title"] else f"Product {r['product_id']}"
         out.setdefault(r["vendor_id"], []).append({
             "product_id": r["product_id"], 
             "discount": r["discount_percent"] or 0,
-            "title": f"Product {r['product_id']}"  # Default title, can be enhanced later
+            "title": title
         })
     return jsonify(out)
 
@@ -489,7 +494,7 @@ def api_admin_export_csv(cid: int):
     
     # Get all products with vendor info
     rows = db.execute("""
-        SELECT vendor_id, product_id, discount_percent 
+        SELECT vendor_id, product_id, product_title, discount_percent 
         FROM campaign_items 
         WHERE campaign_id=? 
         ORDER BY vendor_id, product_id
@@ -498,22 +503,10 @@ def api_admin_export_csv(cid: int):
     if not rows:
         abort(404, description="No products found for this campaign")
     
-    # Try to get product details from vendor API
+    # Use stored product titles from database
     product_details = {}
-    try:
-        # Get products from the first vendor to fetch titles
-        if rows:
-            first_vendor_id = rows[0]['vendor_id']
-            # Note: This is a simplified approach. In a real scenario, you might need to 
-            # iterate through all vendors or have a centralized product database
-            product_ids = [row['product_id'] for row in rows]
-            # For now, we'll use product IDs as titles if we can't fetch them
-            for pid in product_ids:
-                product_details[pid] = f"Product {pid}"
-    except Exception as e:
-        # If we can't fetch product details, use product IDs as titles
-        for row in rows:
-            product_details[row['product_id']] = f"Product {row['product_id']}"
+    for row in rows:
+        product_details[row['product_id']] = row['product_title'] if row['product_title'] else f"Product {row['product_id']}"
     
     # Create CSV data
     output = StringIO()
