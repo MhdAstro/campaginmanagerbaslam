@@ -290,28 +290,24 @@ def admin_create_campaign():
     ensure_admin()
     title = request.form.get("title","").strip()
     description = request.form.get("description","").strip()
-    start_date_persian = request.form.get("start_date_persian","").strip()
-    end_date_persian = request.form.get("end_date_persian","").strip()
+    start_date_str = request.form.get("start_date","").strip()
+    end_date_str = request.form.get("end_date","").strip()
     
-    if not title or not start_date_persian or not end_date_persian:
+    if not title or not start_date_str or not end_date_str:
         flash("همهٔ فیلدهای ضروری را پر کنید.", "danger")
         return redirect(url_for("campaigns"))
     
-    # Convert Persian dates to Gregorian
+    # Parse Gregorian dates from hidden inputs
     try:
-        start_date = jalali_to_gregorian(start_date_persian)
-        end_date = jalali_to_gregorian(end_date_persian)
+        start_date = date.fromisoformat(start_date_str)
+        end_date = date.fromisoformat(end_date_str)
         
-        if not start_date or not end_date:
-            flash("فرمت تاریخ نامعتبر است. از فرمت YYYY/MM/DD استفاده کنید.", "danger")
-            return redirect(url_for("campaigns"))
-            
         if start_date >= end_date:
             flash("تاریخ پایان باید بعد از تاریخ شروع باشد.", "danger")
             return redirect(url_for("campaigns"))
             
-    except Exception as e:
-        flash("خطا در تبدیل تاریخ. لطفاً فرمت صحیح را وارد کنید.", "danger")
+    except ValueError:
+        flash("تاریخ انتخابی نامعتبر است. لطفاً مجدداً انتخاب کنید.", "danger")
         return redirect(url_for("campaigns"))
     
     db = get_db()

@@ -1,10 +1,11 @@
 // Selective Service Worker for Basalam Vendor Portal
-const CACHE_NAME = 'basalam-vendor-portal-v2';
+const CACHE_NAME = 'basalam-vendor-portal-v3';
 
 // Only cache static assets that rarely change
 const STATIC_CACHE_URLS = [
   '/static/style.css',
-  '/static/vendor-ui.js'
+  '/static/vendor-ui.js',
+  '/static/persian-datepicker.js'
 ];
 
 // URLs that should NEVER be cached (dynamic content)
