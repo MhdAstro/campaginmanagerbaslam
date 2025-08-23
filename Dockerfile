@@ -13,17 +13,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && \
 # دایرکتوری اپ
 WORKDIR /app
 
-# مسیر سورس داخل ریپو (با توجه به زیپ شما)
-ARG APP_DIR=basalam_vendor_portal/basalam_vendor_portal/basalam_vendor_portal
-
 # اول فقط ریکوایرمنت‌ها تا لایه کش جدا باشد
-COPY ${APP_DIR}/requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir gunicorn
 
 # سپس کل سورس (به کمک .dockerignore حجم رو کم کنید)
-COPY ${APP_DIR}/ /app/
+COPY . /app/
 
 # یوزر نان‌روت برای امنیت
 RUN useradd -m appuser && chown -R appuser:appuser /app
