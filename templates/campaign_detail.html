@@ -3,7 +3,7 @@
 
 <section class="card">
   <h2 class="h2">{{ campaign.title }}</h2>
-  <div class="muted">{{ campaign.start_date }} تا {{ campaign.end_date }}</div>
+  <div class="muted">{{ campaign.start_date | jalali_pretty }} تا {{ campaign.end_date | jalali_pretty }}</div>
   {% if campaign.description %}<p style="margin-top:8px">{{ campaign.description }}</p>{% endif %}
 </section>
 
@@ -107,53 +107,46 @@ async function hydrateMySelections(campaignId){
 async function hydrateAdminSelections(campaignId){
   const container = document.getElementById('adminGrid');
   container.innerHTML = '<p class="muted">در حال بارگذاری...</p>';
-  const data = await fetch(`/api/admin/campaigns/${campaignId}/selections`).then(r=>r.json());
-  if (!data || Object.keys(data).length===0){
-    container.innerHTML = '<p class="muted">هنوز انتخابی ثبت نشده.</p>';
-    return;
-  }
   
-  // Fetch product details for all products
-  const allProductIds = new Set();
-  for(const items of Object.values(data)){
-    items.forEach(item => allProductIds.add(item.product_id));
-  }
-  
-  // Get product details from vendor API (using admin token)
-  const productDetails = {};
   try {
-    const productRes = await fetch('/api/my-products?per_page=1000').then(r=>r.json());
-    if (productRes.data) {
-      productRes.data.forEach(p => {
-        if (allProductIds.has(p.id)) {
-          productDetails[p.id] = p.title || p.name || '';
-        }
+    const data = await fetch(`/api/admin/campaigns/${campaignId}/selections`).then(r=>r.json());
+    if (!data || Object.keys(data).length===0){
+      container.innerHTML = '<p class="muted">هنوز انتخابی ثبت نشده.</p>';
+      return;
+    }
+    
+    let html = `
+      <div class="head">شناسه غرفه</div>
+      <div class="head">شناسه محصول</div>
+      <div class="head">عنوان محصول</div>
+      <div class="head">تخفیف (%)</div>
+    `;
+    
+    let totalProducts = 0;
+    for(const [vendorId, items] of Object.entries(data)){
+      items.forEach(item => {
+        totalProducts++;
+        html += `
+          <div class="row">
+            <div><code>${vendorId}</code></div>
+            <div><code>${item.product_id}</code></div>
+            <div>${item.title}</div>
+            <div style="color: var(--brand); font-weight: 600;">${item.discount||0}%</div>
+          </div>`;
       });
     }
-  } catch (e) {
-    console.warn('Could not fetch product details:', e);
+    
+    html += `
+      <div style="grid-column: 1 / -1; text-align: center; padding: var(--space-md); background: var(--card-hover); border-radius: var(--radius-md); margin-top: var(--space-md);">
+        <strong>مجموع: ${totalProducts} محصول از ${Object.keys(data).length} غرفه‌دار</strong>
+      </div>
+    `;
+    
+    container.innerHTML = html;
+  } catch (error) {
+    console.error('Error loading admin selections:', error);
+    container.innerHTML = '<p style="color: var(--danger);">خطا در بارگذاری داده‌ها</p>';
   }
-  
-  let html = `
-    <div class="head">Vendor ID</div>
-    <div class="head">Product ID</div>
-    <div class="head">Title</div>
-    <div class="head">Discount (%)</div>
-  `;
-  
-  for(const [vendorId, items] of Object.entries(data)){
-    items.forEach(item => {
-      const title = productDetails[item.product_id] || 'نامشخص';
-      html += `
-        <div class="row">
-          <div>${vendorId}</div>
-          <div>${item.product_id}</div>
-          <div>${title}</div>
-          <div>${item.discount||0}%</div>
-        </div>`;
-    });
-  }
-  container.innerHTML = html;
 }
 document.getElementById('refreshAdmin')?.addEventListener('click', ()=> hydrateAdminSelections({{ campaign.id }}));
 {% endif %}

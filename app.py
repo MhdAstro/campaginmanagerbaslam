@@ -213,6 +213,7 @@ def campaign_detail(cid: int):
         campaign=camp,
         my_products=my,
         user=session.get("user"),
+        is_admin=is_admin(),
     )
 
 # Auth
@@ -286,15 +287,34 @@ def admin_create_campaign():
     ensure_admin()
     title = request.form.get("title","").strip()
     description = request.form.get("description","").strip()
-    start_date = request.form.get("start_date","").strip()
-    end_date = request.form.get("end_date","").strip()
-    if not title or not start_date or not end_date:
+    start_date_persian = request.form.get("start_date_persian","").strip()
+    end_date_persian = request.form.get("end_date_persian","").strip()
+    
+    if not title or not start_date_persian or not end_date_persian:
         flash("همهٔ فیلدهای ضروری را پر کنید.", "danger")
         return redirect(url_for("campaigns"))
+    
+    # Convert Persian dates to Gregorian
+    try:
+        start_date = jalali_to_gregorian(start_date_persian)
+        end_date = jalali_to_gregorian(end_date_persian)
+        
+        if not start_date or not end_date:
+            flash("فرمت تاریخ نامعتبر است. از فرمت YYYY/MM/DD استفاده کنید.", "danger")
+            return redirect(url_for("campaigns"))
+            
+        if start_date >= end_date:
+            flash("تاریخ پایان باید بعد از تاریخ شروع باشد.", "danger")
+            return redirect(url_for("campaigns"))
+            
+    except Exception as e:
+        flash("خطا در تبدیل تاریخ. لطفاً فرمت صحیح را وارد کنید.", "danger")
+        return redirect(url_for("campaigns"))
+    
     db = get_db()
     db.execute(
         "INSERT INTO campaigns (title, description, start_date, end_date) VALUES (?,?,?,?)",
-        (title, description, start_date, end_date)
+        (title, description, start_date.isoformat(), end_date.isoformat())
     )
     db.commit()
     flash("کمپین ایجاد شد.", "success")
@@ -443,9 +463,18 @@ def api_admin_campaign_selections(cid: int):
         out.setdefault(r["vendor_id"], []).append({
             "product_id": r["product_id"], 
             "discount": r["discount_percent"] or 0,
-            "title": ""  # Will be populated by frontend
+            "title": f"Product {r['product_id']}"  # Default title, can be enhanced later
         })
     return jsonify(out)
+
+# Admin API to get products from all vendors (for admin view)
+@app.route("/api/admin/all-products")
+def api_admin_all_products():
+    ensure_admin()
+    # This is a placeholder - in a real scenario, you'd need to fetch from all vendors
+    # or have a centralized product database. For now, we'll return an empty structure
+    # since we don't have access to other vendors' tokens
+    return jsonify({"data": [], "message": "Admin product aggregation not implemented"})
 
 # Admin CSV download for campaign products
 @app.route("/api/admin/campaigns/<int:cid>/export-csv")
