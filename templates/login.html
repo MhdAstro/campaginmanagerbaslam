@@ -1,9 +1,50 @@
-\
 {% extends "base.html" %}
+{% block title %}ورود{% endblock %}
 {% block content %}
-<section class="card center">
-  <h1 class="h1">ورود با باسلام</h1>
-  <p class="muted">برای ادامه روی دکمه زیر کلیک کنید.</p>
-  <a href="/login" class="btn">ورود با باسلام</a>
-</section>
+
+<div style="min-height: 70vh; display: flex; align-items: center; justify-content: center;">
+  <section class="card center" style="max-width: 400px; width: 100%;">
+    <div style="text-align: center; margin-bottom: var(--space-xl);">
+      <div style="font-size: 4rem; margin-bottom: var(--space-md);">🔐</div>
+      <h1 class="h1">خوش آمدید</h1>
+      <p class="muted">برای دسترسی به پنل مدیریت، وارد حساب کاربری خود شوید</p>
+    </div>
+    
+    <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-lg); margin-bottom: var(--space-lg);">
+      <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+        <span role="img" aria-label="basalam">🏪</span>
+        <h3 class="h3" style="margin: 0;">Basalam Vendor Portal</h3>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+        <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm); background: var(--card); border-radius: var(--radius-md);">
+          <span role="img" aria-label="secure">🔒</span>
+          <span style="font-size: 0.875rem; color: var(--text-secondary);">احراز هویت امن</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm); background: var(--card); border-radius: var(--radius-md);">
+          <span role="img" aria-label="data">📊</span>
+          <span style="font-size: 0.875rem; color: var(--text-secondary);">مدیریت کمپین‌ها</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm); background: var(--card); border-radius: var(--radius-md);">
+          <span role="img" aria-label="products">📦</span>
+          <span style="font-size: 0.875rem; color: var(--text-secondary);">انتخاب محصولات</span>
+        </div>
+      </div>
+    </div>
+    
+    <a href="/login" class="btn" style="width: 100%; justify-content: center; padding: var(--space-md); font-size: 1rem;">
+      <span role="img" aria-label="login">🔑</span>
+      ورود با باسلام
+    </a>
+    
+    <div style="text-align: center; margin-top: var(--space-lg); padding-top: var(--space-lg); border-top: 1px solid var(--border);">
+      <p class="muted" style="font-size: 0.75rem; line-height: 1.5;">
+        با ورود به سیستم، شما موافقت می‌کنید که از قوانین و مقررات استفاده از سرویس پیروی کنید.
+      </p>
+    </div>
+  </section>
+</div>
+
 {% endblock %}

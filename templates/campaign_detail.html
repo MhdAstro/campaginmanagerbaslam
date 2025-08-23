@@ -34,7 +34,10 @@
   <div id="tab-admin" class="tab-pane">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
       <h3 class="h3">انتخاب‌های همهٔ غرفه‌دارها</h3>
-      <button class="btn" id="refreshAdmin">بروزرسانی</button>
+      <div style="display:flex;gap:8px">
+        <a class="btn" href="{{ url_for('api_admin_export_csv', cid=campaign.id) }}">دانلود CSV</a>
+        <button class="btn" id="refreshAdmin">بروزرسانی</button>
+      </div>
     </div>
     <div id="adminGrid" class="grid-admin" style="margin-top:8px"></div>
   </div>
@@ -47,26 +50,57 @@
 <script src="{{ url_for('static', filename='vendor-ui.js') }}" defer></script>
 <script>
 async function hydrateMySelections(campaignId){
-  const [productsRes, selectedRes] = await Promise.all([
-    fetch('/api/my-products').then(r=>r.json()),
-    fetch(`/api/campaigns/${campaignId}/my-selections`).then(r=>r.json())
-  ]);
-  const all = productsRes.data || [];
-  // selectedRes: [{product_id, discount}]
-  const selectedMap = new Map(selectedRes.map(x => [x.product_id, (x.discount||0)]));
-  const grid = document.getElementById('myList');
-  grid.innerHTML = `<div class="head">کد</div><div class="head">عنوان</div><div class="head">قیمت</div><div class="head">تخفیف</div>`;
-  all.filter(p=> selectedMap.has(p.id)).forEach(p=>{
-    const disc = selectedMap.get(p.id) || 0;
-    grid.insertAdjacentHTML('beforeend', `
-      <div class="row">
-        <div>${p.id}</div>
-        <div>${p.title || p.name || ""}</div>
-        <div>${(p.price||p.primary_price||0).toLocaleString()} تومان</div>
-        <div>${disc}%</div>
-      </div>
-    `);
-  });
+  try {
+    const [productsRes, selectedRes] = await Promise.all([
+      fetch('/api/my-products').then(async r => {
+        if (!r.ok) {
+          console.error('Products API error:', r.status, r.statusText);
+          return { data: [] };
+        }
+        return r.json();
+      }),
+      fetch(`/api/campaigns/${campaignId}/my-selections`).then(async r => {
+        if (!r.ok) {
+          console.error('Selections API error:', r.status, r.statusText);
+          return [];
+        }
+        return r.json();
+      })
+    ]);
+    
+    const all = productsRes.data || [];
+    // selectedRes: [{product_id, discount}]
+    const selectedMap = new Map(selectedRes.map(x => [x.product_id, (x.discount||0)]));
+    
+    const grid = document.getElementById('myList');
+    grid.innerHTML = `<div class="head">کد</div><div class="head">عنوان</div><div class="head">قیمت</div><div class="head">تخفیف</div>`;
+    
+    const selectedProducts = all.filter(p => selectedMap.has(p.id) || selectedMap.has(String(p.id)));
+    
+    if (selectedProducts.length === 0) {
+      if (all.length === 0) {
+        grid.innerHTML += `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#666">هیچ محصولی در دسترس نیست.</div>`;
+      } else {
+        grid.innerHTML += `<div style="grid-column:1/-1;text-align:center;padding:20px;color:#666">هیچ محصولی انتخاب نشده است.</div>`;
+      }
+    } else {
+      selectedProducts.forEach(p => {
+        const disc = selectedMap.get(p.id) || selectedMap.get(String(p.id)) || 0;
+        grid.insertAdjacentHTML('beforeend', `
+          <div class="row">
+            <div>${p.id}</div>
+            <div>${p.title || p.name || ""}</div>
+            <div>${(p.price||p.primary_price||0).toLocaleString()} تومان</div>
+            <div>${disc}%</div>
+          </div>
+        `);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading selections:', error);
+    const grid = document.getElementById('myList');
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:20px;color:red">خطا در بارگذاری انتخاب‌ها: ${error.message}</div>`;
+  }
 }
 
 {% if is_admin %}
@@ -78,16 +112,46 @@ async function hydrateAdminSelections(campaignId){
     container.innerHTML = '<p class="muted">هنوز انتخابی ثبت نشده.</p>';
     return;
   }
+  
+  // Fetch product details for all products
+  const allProductIds = new Set();
+  for(const items of Object.values(data)){
+    items.forEach(item => allProductIds.add(item.product_id));
+  }
+  
+  // Get product details from vendor API (using admin token)
+  const productDetails = {};
+  try {
+    const productRes = await fetch('/api/my-products?per_page=1000').then(r=>r.json());
+    if (productRes.data) {
+      productRes.data.forEach(p => {
+        if (allProductIds.has(p.id)) {
+          productDetails[p.id] = p.title || p.name || '';
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Could not fetch product details:', e);
+  }
+  
   let html = `
     <div class="head">Vendor ID</div>
-    <div class="head">Products (٪)</div>
+    <div class="head">Product ID</div>
+    <div class="head">Title</div>
+    <div class="head">Discount (%)</div>
   `;
+  
   for(const [vendorId, items] of Object.entries(data)){
-    html += `
-      <div class="row">
-        <div>${vendorId}</div>
-        <div>${items.map(p=>`<code>${p.product_id} — ${p.discount||0}%</code>`).join('، ')}</div>
-      </div>`;
+    items.forEach(item => {
+      const title = productDetails[item.product_id] || 'نامشخص';
+      html += `
+        <div class="row">
+          <div>${vendorId}</div>
+          <div>${item.product_id}</div>
+          <div>${title}</div>
+          <div>${item.discount||0}%</div>
+        </div>`;
+    });
   }
   container.innerHTML = html;
 }

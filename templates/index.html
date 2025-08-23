@@ -1,40 +1,137 @@
 {% extends "base.html" %}
+{% block title %}کمپین‌ها{% endblock %}
 {% block content %}
 
 <section class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-    <h2 class="h2">کمپین‌ها</h2>
-    <input id="searchCamp" class="input" placeholder="جستجوی عنوان کمپین...">
+  <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
+    <div>
+      <h2 class="h2">
+        <span role="img" aria-label="campaigns">📋</span>
+        کمپین‌ها
+      </h2>
+      <p class="muted">مدیریت و مشاهده کمپین‌های فعال</p>
+    </div>
+    <div style="position: relative;">
+      <input id="searchCamp" class="input" placeholder="جستجوی عنوان کمپین..." style="padding-left: 2.5rem;">
+      <span role="img" aria-label="search" style="position: absolute; left: var(--space-sm); top: 50%; transform: translateY(-50%); color: var(--muted);">🔍</span>
+    </div>
   </div>
 
   {% if campaigns %}
     <div id="campGrid" class="grid-campaigns">
       <div class="head">عنوان</div>
-      <div class="head">بازه</div>
+      <div class="head">بازه زمانی</div>
       <div class="head">عملیات</div>
 
       {% for c in campaigns %}
-        <div class="row camp-row">
-          <div class="camp-title">{{ c.title }}</div>
-          <div>{{ c.start_date }} تا {{ c.end_date }}</div>
-          <div><a class="btn" href="{{ url_for('campaign_detail', cid=c.id) }}">مشاهده</a></div>
+        <div class="row camp-row" data-title="{{ c.title.lower() }}">
+          <div class="camp-title">
+            <div style="font-weight: 600; color: var(--text);">{{ c.title }}</div>
+            {% if c.description %}
+              <div class="muted" style="font-size: 0.75rem; margin-top: var(--space-xs);">{{ c.description[:50] }}{% if c.description|length > 50 %}...{% endif %}</div>
+            {% endif %}
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+              <span role="img" aria-label="calendar">📅</span>
+              {{ c.start_date }} تا {{ c.end_date }}
+            </div>
+            {% set days_left = ((c.end_date - now).days) if c.end_date > now else 0 %}
+            {% if days_left > 0 %}
+              <div style="font-size: 0.75rem; color: var(--accent); margin-top: var(--space-xs);">
+                {{ days_left }} روز باقی‌مانده
+              </div>
+            {% elif days_left == 0 %}
+              <div style="font-size: 0.75rem; color: var(--warning); margin-top: var(--space-xs);">
+                امروز آخرین روز
+              </div>
+            {% else %}
+              <div style="font-size: 0.75rem; color: var(--danger); margin-top: var(--space-xs);">
+                منقضی شده
+              </div>
+            {% endif %}
+          </div>
+          <div>
+            <a class="btn" href="{{ url_for('campaign_detail', cid=c.id) }}">
+              <span role="img" aria-label="view">👁️</span>
+              مشاهده
+            </a>
+          </div>
         </div>
       {% endfor %}
     </div>
+    
+    <div style="text-align: center; margin-top: var(--space-lg); color: var(--text-secondary); font-size: 0.875rem;">
+      <span role="img" aria-label="info">ℹ️</span>
+      {{ campaigns|length }} کمپین یافت شد
+    </div>
   {% else %}
-    <p class="muted">کمپینی وجود ندارد.</p>
+    <div style="text-align: center; padding: var(--space-xl); color: var(--text-secondary);">
+      <div style="font-size: 3rem; margin-bottom: var(--space-md);">📋</div>
+      <h3 class="h3">کمپینی وجود ندارد</h3>
+      <p class="muted">هنوز هیچ کمپینی ایجاد نشده است.</p>
+      {% if is_admin %}
+        <div style="margin-top: var(--space-lg);">
+          <a href="#create-campaign" class="btn" onclick="document.getElementById('create-campaign').scrollIntoView({behavior: 'smooth'})">
+            <span role="img" aria-label="create">➕</span>
+            ایجاد اولین کمپین
+          </a>
+        </div>
+      {% endif %}
+    </div>
   {% endif %}
 </section>
 
 {% if is_admin %}
-<section class="card" style="margin-top:16px">
-  <h3 class="h3">ساخت کمپین (ادمین)</h3>
-  <form action="{{ url_for('admin_create_campaign') }}" method="post" class="form-grid two">
-    <div><label>عنوان</label><input class="input" name="title" required></div>
-    <div><label>شروع</label><input class="input" type="date" name="start_date" required></div>
-    <div><label>پایان</label><input class="input" type="date" name="end_date" required></div>
-    <div style="grid-column:1/-1"><label>توضیحات</label><textarea class="input" name="description"></textarea></div>
-    <div style="grid-column:1/-1;display:flex;justify-content:flex-end"><button class="btn">ایجاد کمپین</button></div>
+<section id="create-campaign" class="card" style="margin-top: var(--space-lg);">
+  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg);">
+    <span role="img" aria-label="admin">👑</span>
+    <h3 class="h3">ساخت کمپین جدید</h3>
+  </div>
+  
+  <form action="{{ url_for('admin_create_campaign') }}" method="post" class="form-grid two" id="campaignForm">
+    <div>
+      <label style="display: block; margin-bottom: var(--space-xs); font-weight: 500; color: var(--text);">
+        <span role="img" aria-label="title">📝</span>
+        عنوان کمپین
+      </label>
+      <input class="input" name="title" required placeholder="مثال: تخفیف ویژه تابستان">
+    </div>
+    
+    <div>
+      <label style="display: block; margin-bottom: var(--space-xs); font-weight: 500; color: var(--text);">
+        <span role="img" aria-label="start">📅</span>
+        تاریخ شروع
+      </label>
+      <input class="input" type="date" name="start_date" required>
+    </div>
+    
+    <div>
+      <label style="display: block; margin-bottom: var(--space-xs); font-weight: 500; color: var(--text);">
+        <span role="img" aria-label="end">📅</span>
+        تاریخ پایان
+      </label>
+      <input class="input" type="date" name="end_date" required>
+    </div>
+    
+    <div style="grid-column: 1 / -1;">
+      <label style="display: block; margin-bottom: var(--space-xs); font-weight: 500; color: var(--text);">
+        <span role="img" aria-label="description">📄</span>
+        توضیحات (اختیاری)
+      </label>
+      <textarea class="input" name="description" placeholder="توضیحات مربوط به کمپین..." rows="3"></textarea>
+    </div>
+    
+    <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: var(--space-md);">
+      <button type="button" class="btn ghost" onclick="resetForm()">
+        <span role="img" aria-label="reset">🔄</span>
+        پاک کردن
+      </button>
+      <button type="submit" class="btn">
+        <span role="img" aria-label="create">➕</span>
+        ایجاد کمپین
+      </button>
+    </div>
   </form>
 </section>
 {% endif %}
@@ -43,16 +140,108 @@
 
 {% block scripts %}
 <script>
-const q = document.getElementById('searchCamp');
-const grid = document.getElementById('campGrid');
-if(q && grid){
-  q.addEventListener('input', ()=>{
-    const term = q.value.trim().toLowerCase();
-    grid.querySelectorAll('.camp-row').forEach(row=>{
-      const title = (row.querySelector('.camp-title')?.textContent || '').toLowerCase();
-      row.style.display = title.includes(term) ? 'contents' : 'none';
-    });
+// Enhanced search functionality
+const searchInput = document.getElementById('searchCamp');
+const campaignGrid = document.getElementById('campGrid');
+
+if (searchInput && campaignGrid) {
+  let searchTimeout;
+  
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    
+    searchTimeout = setTimeout(() => {
+      const searchTerm = e.target.value.trim().toLowerCase();
+      const campaignRows = campaignGrid.querySelectorAll('.camp-row');
+      let visibleCount = 0;
+      
+      campaignRows.forEach(row => {
+        const title = row.getAttribute('data-title') || '';
+        const isVisible = title.includes(searchTerm);
+        
+        row.style.display = isVisible ? 'contents' : 'none';
+        if (isVisible) visibleCount++;
+      });
+      
+      // Update results count
+      const resultsElement = document.querySelector('.results-count');
+      if (resultsElement) {
+        resultsElement.textContent = `${visibleCount} کمپین یافت شد`;
+      }
+    }, 300); // Debounce search
   });
+  
+  // Add search results counter
+  const resultsCounter = document.createElement('div');
+  resultsCounter.className = 'results-count';
+  resultsCounter.style.cssText = 'text-align: center; margin-top: var(--space-lg); color: var(--text-secondary); font-size: 0.875rem;';
+  resultsCounter.innerHTML = `<span role="img" aria-label="info">ℹ️</span> ${campaignRows.length} کمپین یافت شد`;
+  campaignGrid.parentNode.appendChild(resultsCounter);
 }
+
+// Form reset functionality
+function resetForm() {
+  const form = document.getElementById('campaignForm');
+  if (form) {
+    form.reset();
+    
+    // Show success message
+    const message = document.createElement('div');
+    message.className = 'flash success';
+    message.innerHTML = `
+      <div style="display: flex; align-items: center; gap: var(--space-sm);">
+        <span role="img" aria-label="success">✅</span>
+        فرم پاک شد
+      </div>
+    `;
+    
+    form.parentNode.insertBefore(message, form);
+    
+    // Remove message after 3 seconds
+    setTimeout(() => {
+      message.remove();
+    }, 3000);
+  }
+}
+
+// Date validation
+document.addEventListener('DOMContentLoaded', () => {
+  const startDateInput = document.querySelector('input[name="start_date"]');
+  const endDateInput = document.querySelector('input[name="end_date"]');
+  
+  if (startDateInput && endDateInput) {
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    startDateInput.min = today;
+    endDateInput.min = today;
+    
+    // Update end date minimum when start date changes
+    startDateInput.addEventListener('change', () => {
+      endDateInput.min = startDateInput.value;
+      if (endDateInput.value && endDateInput.value < startDateInput.value) {
+        endDateInput.value = startDateInput.value;
+      }
+    });
+    
+    // Update start date maximum when end date changes
+    endDateInput.addEventListener('change', () => {
+      startDateInput.max = endDateInput.value;
+    });
+  }
+});
+
+// Add loading state to form submission
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('campaignForm');
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span role="img" aria-label="loading">⏳</span> در حال ایجاد...';
+      }
+    });
+  }
+});
 </script>
 {% endblock %}

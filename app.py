@@ -6,9 +6,11 @@ from datetime import date
 from dotenv import load_dotenv
 from flask import (
     Flask, redirect, request, session, url_for,
-    render_template, jsonify, abort, g, flash
+    render_template, jsonify, abort, g, flash, send_file
 )
 import requests
+import csv
+from io import StringIO, BytesIO
 
 load_dotenv()
 
@@ -94,12 +96,27 @@ def index():
     rows = db.execute(
         "SELECT * FROM campaigns ORDER BY date(start_date) DESC"
     ).fetchall()
+    # Parse date strings -> date objects for template arithmetic
+    campaigns = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["start_date"] = date.fromisoformat(str(d["start_date"]))
+        except Exception:
+            pass
+        try:
+            d["end_date"] = date.fromisoformat(str(d["end_date"]))
+        except Exception:
+            pass
+        campaigns.append(d)
     return render_template(
         "index.html",
-        campaigns=rows,
-        user=session.get("user"),
+        campaigns=campaigns,
         is_admin=is_admin(),
+        now=date.today(),
+        user=session.get("user"),
     )
+
 
 @app.route("/campaign/<int:cid>")
 def campaign_detail(cid: int):
@@ -122,7 +139,6 @@ def campaign_detail(cid: int):
         "campaign_detail.html",
         campaign=camp,
         my_products=my,
-        is_admin=is_admin(),
         user=session.get("user"),
     )
 
@@ -187,6 +203,10 @@ def logout():
     session.clear()
     return redirect(url_for("index"))
 
+@app.route("/sw.js")
+def service_worker():
+    return app.send_static_file('sw.js')
+
 # Admin: create campaign
 @app.route("/admin/campaigns/create", methods=["POST"])
 def admin_create_campaign():
@@ -217,28 +237,56 @@ def api_campaigns():
 @app.route("/api/my-products")
 def api_my_products():
     ensure_login()
-    page = request.args.get("page", 1)
-    per  = request.args.get("per_page", 50)
-    vid  = session["vendor_id"]
-    r = requests.get(
-        VENDOR_PRODS.format(vendor_id=vid),
-        headers={"Authorization": f"Bearer {session['access_token']}", "Accept": "application/json"},
-        params={"page": page, "per_page": per},
-        timeout=30
-    )
-    if not r.ok: return r.text, r.status_code
-    return jsonify(r.json())
+    try:
+        page = request.args.get("page", 1)
+        per = request.args.get("per_page", 50)
+        vid = session["vendor_id"]
+        
+        # Convert to integers and validate
+        try:
+            page = int(page)
+            per = int(per)
+        except (ValueError, TypeError):
+            page = 1
+            per = 50
+        
+        # Ensure reasonable limits
+        per = max(1, min(100, per))  # Between 1 and 100
+        page = max(1, page)  # At least 1
+        
+        r = requests.get(
+            VENDOR_PRODS.format(vendor_id=vid),
+            headers={"Authorization": f"Bearer {session['access_token']}", "Accept": "application/json"},
+            params={"page": page, "per_page": per},
+            timeout=30
+        )
+        
+        if not r.ok:
+            # Return empty data instead of error
+            return jsonify({"data": [], "total": 0, "page": page, "per_page": per})
+        
+        data = r.json()
+        return jsonify(data)
+        
+    except Exception as e:
+        print(f"Error in api_my_products: {e}")
+        # Return empty data on error
+        return jsonify({"data": [], "total": 0, "page": 1, "per_page": 50})
 
 # → انتخاب‌های من (با تخفیف)
 @app.route("/api/campaigns/<int:cid>/my-selections")
 def api_my_selections(cid: int):
     ensure_login()
     db = get_db()
+    
     rows = db.execute(
         "SELECT product_id, discount_percent FROM campaign_items WHERE campaign_id=? AND vendor_id=?",
         (cid, session["vendor_id"]),
     ).fetchall()
-    return jsonify([{"product_id": r["product_id"], "discount": r["discount_percent"] or 0} for r in rows])
+    
+    result = [{"product_id": r["product_id"], "discount": r["discount_percent"] or 0} for r in rows]
+    
+    return jsonify(result)
 
 # → ذخیرهٔ انتخاب‌ها (حداقل تخفیف 3٪)
 @app.route("/api/campaigns/<int:cid>/select-products", methods=["POST"])
@@ -275,6 +323,7 @@ def api_select_products(cid: int):
         }), 400
 
     db = get_db()
+    
     db.execute("DELETE FROM campaign_items WHERE campaign_id=? AND vendor_id=?", (cid, session["vendor_id"]))
     for pid, disc in sorted(set(cleaned)):
         db.execute(
@@ -282,6 +331,7 @@ def api_select_products(cid: int):
             (cid, session["vendor_id"], pid, disc),
         )
     db.commit()
+    
     return jsonify({"ok": True, "count": len(set(cleaned))})
 
 # Admin view of selections (with discounts)
@@ -295,8 +345,80 @@ def api_admin_campaign_selections(cid: int):
     ).fetchall()
     out = {}
     for r in rows:
-        out.setdefault(r["vendor_id"], []).append({"product_id": r["product_id"], "discount": r["discount_percent"] or 0})
+        out.setdefault(r["vendor_id"], []).append({
+            "product_id": r["product_id"], 
+            "discount": r["discount_percent"] or 0,
+            "title": ""  # Will be populated by frontend
+        })
     return jsonify(out)
+
+# Admin CSV download for campaign products
+@app.route("/api/admin/campaigns/<int:cid>/export-csv")
+def api_admin_export_csv(cid: int):
+    ensure_admin()
+    db = get_db()
+    
+    # Get campaign info
+    campaign = db.execute("SELECT * FROM campaigns WHERE id=?", (cid,)).fetchone()
+    if not campaign:
+        abort(404)
+    
+    # Get all products with vendor info
+    rows = db.execute("""
+        SELECT vendor_id, product_id, discount_percent 
+        FROM campaign_items 
+        WHERE campaign_id=? 
+        ORDER BY vendor_id, product_id
+    """, (cid,)).fetchall()
+    
+    if not rows:
+        abort(404, description="No products found for this campaign")
+    
+    # Try to get product details from vendor API
+    product_details = {}
+    try:
+        # Get products from the first vendor to fetch titles
+        if rows:
+            first_vendor_id = rows[0]['vendor_id']
+            # Note: This is a simplified approach. In a real scenario, you might need to 
+            # iterate through all vendors or have a centralized product database
+            product_ids = [row['product_id'] for row in rows]
+            # For now, we'll use product IDs as titles if we can't fetch them
+            for pid in product_ids:
+                product_details[pid] = f"Product {pid}"
+    except Exception as e:
+        # If we can't fetch product details, use product IDs as titles
+        for row in rows:
+            product_details[row['product_id']] = f"Product {row['product_id']}"
+    
+    # Create CSV data
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['Product ID', 'Title', 'Vendor ID', 'Discount (%)'])
+    
+    # Write data
+    for row in rows:
+        writer.writerow([
+            row['product_id'],
+            product_details.get(row['product_id'], f"Product {row['product_id']}"),
+            row['vendor_id'],
+            row['discount_percent'] or 0
+        ])
+    
+    # Convert to bytes for send_file
+    csv_content = output.getvalue()
+    output_bytes = BytesIO(csv_content.encode('utf-8'))
+    output_bytes.seek(0)
+    
+    filename = f"campaign_{cid}_products_{date.today()}.csv"
+    return send_file(
+        output_bytes,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=filename
+    )
 
 @app.route("/dashboard")
 def dashboard():

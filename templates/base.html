@@ -3,19 +3,57 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>پنل غرفه‌دار + کمپین</title>
+  <meta name="description" content="پنل مدیریت غرفه‌داران باسلام - مدیریت کمپین‌ها و محصولات">
+  <meta name="theme-color" content="#6366f1">
+  <title>{% block title %}پنل غرفه‌دار + کمپین{% endblock %} | Basalam</title>
+  
+  <!-- Preload critical fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>">
+  
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Basalam Vendor Portal",
+    "description": "پنل مدیریت غرفه‌داران باسلام",
+    "url": "{{ request.url_root }}",
+    "applicationCategory": "BusinessApplication"
+  }
+  </script>
 </head>
 <body>
   <header class="topbar">
-    <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
-      <div class="brand">Basalam Vendor Portal</div>
-      <nav style="display:flex;gap:8px;align-items:center">
+    <div class="container">
+      <div class="brand">
+        <span role="img" aria-label="store">🏪</span>
+        Basalam Vendor Portal
+      </div>
+      <nav>
         {% if session.get('access_token') %}
-          <span class="muted" style="font-size:12px">{{ (user and (user.name or user.username)) or '' }}</span>
-          <a href="/logout" class="btn">خروج</a>
+          <div style="display: flex; align-items: center; gap: var(--space-md);">
+            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+              <span role="img" aria-label="user">👤</span>
+              <span class="muted" style="font-size: 0.875rem;">
+                {{ (user and (user.name or user.username)) or 'کاربر' }}
+              </span>
+            </div>
+            <a href="/logout" class="btn ghost">
+              <span role="img" aria-label="logout">🚪</span>
+              خروج
+            </a>
+          </div>
         {% else %}
-          <a href="/login" class="btn">ورود با باسلام</a>
+          <a href="/login" class="btn">
+            <span role="img" aria-label="login">🔑</span>
+            ورود با باسلام
+          </a>
         {% endif %}
       </nav>
     </div>
@@ -26,7 +64,20 @@
       {% if messages %}
         <ul class="flashes">
           {% for cat, msg in messages %}
-            <li class="flash {{cat}}">{{ msg }}</li>
+            <li class="flash {{cat}}">
+              <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                {% if cat == 'success' %}
+                  <span role="img" aria-label="success">✅</span>
+                {% elif cat == 'error' %}
+                  <span role="img" aria-label="error">❌</span>
+                {% elif cat == 'warning' %}
+                  <span role="img" aria-label="warning">⚠️</span>
+                {% else %}
+                  <span role="img" aria-label="info">ℹ️</span>
+                {% endif %}
+                {{ msg }}
+              </div>
+            </li>
           {% endfor %}
         </ul>
       {% endif %}
@@ -35,6 +86,23 @@
     {% block content %}{% endblock %}
   </main>
 
+  <footer style="text-align: center; padding: var(--space-xl) 0; color: var(--text-secondary); font-size: 0.875rem;">
+    <div class="container">
+      <p>© 2024 Basalam Vendor Portal. تمامی حقوق محفوظ است.</p>
+    </div>
+  </footer>
+
   {% block scripts %}{% endblock %}
+  
+  <!-- Service Worker for PWA capabilities -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => console.log('SW registered'))
+          .catch(error => console.log('SW registration failed'));
+      });
+    }
+  </script>
 </body>
 </html>
