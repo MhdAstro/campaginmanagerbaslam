@@ -250,7 +250,7 @@ function renderList(products, chosenMap, mount, term="") {
     row.innerHTML = `
       <div>${p.id}</div>
       <div>${p.title || p.name || ''}</div>
-      <div>${(p.price || p.primary_price || 0).toLocaleString()} تومان</div>
+      <div>${(p.price || p.primary_price || 0).toLocaleString()} ریال</div>
       <div>
         <input type="number" class="input" style="max-width:90px" min="3" max="100" step="0.1"
                value="${discVal}" data-disc="${p.id}" ${checked?'':'disabled'} title="حداقل ۳٪">
