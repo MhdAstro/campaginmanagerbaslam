@@ -34,7 +34,7 @@
           <div>
             <div style="display: flex; align-items: center; gap: var(--space-xs);">
               <span role="img" aria-label="calendar">📅</span>
-              {{ c.start_date }} تا {{ c.end_date }}
+              {{ c.start_date | jalali_pretty }} تا {{ c.end_date | jalali_pretty }}
             </div>
             {% set days_left = ((c.end_date - now).days) if c.end_date > now else 0 %}
             {% if days_left > 0 %}
@@ -56,6 +56,13 @@
               <span role="img" aria-label="view">👁️</span>
               مشاهده
             </a>
+            {% if is_admin %}
+            <form action="{{ url_for('admin_delete_campaign', cid=c.id) }}" method="post" style="display: inline; margin-right: var(--space-xs);" onsubmit="return confirm('آیا مطمئن هستید که می‌خواهید کمپین &quot;{{ c.title }}&quot; را حذف کنید؟')">
+              <button type="submit" class="btn danger" style="padding: var(--space-xs) var(--space-sm);">
+                <span role="img" aria-label="delete">🗑️</span>
+              </button>
+            </form>
+            {% endif %}
           </div>
         </div>
       {% endfor %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}خوش آمدید{% endblock %}
+{% block content %}
+
+<section class="card" style="text-align: center; padding: var(--space-xl);">
+  <div style="margin-bottom: var(--space-xl);">
+    <div style="font-size: 4rem; margin-bottom: var(--space-lg);">🛍️</div>
+    <h1 class="h1" style="font-size: 2.5rem; margin-bottom: var(--space-lg);">
+      به پورتال غرفه‌داران <span style="color: var(--brand);">باسلام</span> خوش آمدید
+    </h1>
+    <p style="font-size: 1.125rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto var(--space-xl); line-height: 1.8;">
+      در این پلتفرم می‌توانید در کمپین‌های تخفیف باسلام شرکت کنید، محصولات خود را انتخاب کرده و از مزایای فروش بیشتر بهره‌مند شوید.
+    </p>
+  </div>
+
+  <div style="display: flex; gap: var(--space-lg); justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: var(--space-xl);">
+    <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+      <a href="{{ url_for('campaigns') }}" class="btn" style="padding: var(--space-md) var(--space-xl); font-size: 1.125rem; min-width: 200px;">
+        <span role="img" aria-label="campaigns" style="font-size: 1.25rem;">📋</span>
+        مشاهده کمپین‌ها
+      </a>
+      <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">
+        لیست کمپین‌های فعال و آینده
+      </p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+      <a href="{{ url_for('rules') }}" class="btn ghost" style="padding: var(--space-md) var(--space-xl); font-size: 1.125rem; min-width: 200px;">
+        <span role="img" aria-label="rules" style="font-size: 1.25rem;">📜</span>
+        قوانین و مقررات
+      </a>
+      <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0;">
+        ضوابط شرکت در کمپین‌ها
+      </p>
+    </div>
+  </div>
+
+  <div style="background: var(--card-hover); border-radius: var(--radius-md); padding: var(--space-lg); margin: var(--space-xl) 0;">
+    <h3 class="h3" style="margin-bottom: var(--space-md); color: var(--brand);">
+      <span role="img" aria-label="info">ℹ️</span>
+      مزایای شرکت در کمپین‌های باسلام
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-md); text-align: right;">
+      <div style="display: flex; align-items: center; gap: var(--space-sm);">
+        <span style="color: var(--accent); font-size: 1.25rem;">✅</span>
+        <span>افزایش فروش و مشتریان جدید</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: var(--space-sm);">
+        <span style="color: var(--accent); font-size: 1.25rem;">✅</span>
+        <span>نمایش بیشتر محصولات</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: var(--space-sm);">
+        <span style="color: var(--accent); font-size: 1.25rem;">✅</span>
+        <span>مدیریت آسان تخفیفات</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: var(--space-sm);">
+        <span style="color: var(--accent); font-size: 1.25rem;">✅</span>
+        <span>پشتیبانی کامل باسلام</span>
+      </div>
+    </div>
+  </div>
+
+  {% if not is_logged_in %}
+  <div style="border: 2px dashed var(--border); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl);">
+    <h3 class="h3" style="margin-bottom: var(--space-md);">
+      <span role="img" aria-label="login">🔐</span>
+      برای شروع وارد حساب کاربری خود شوید
+    </h3>
+    <p style="color: var(--text-secondary); margin-bottom: var(--space-lg);">
+      با ورود به حساب غرفه‌دار خود، می‌توانید در کمپین‌ها شرکت کرده و محصولات خود را انتخاب کنید.
+    </p>
+    <a href="{{ url_for('login') }}" class="btn" style="padding: var(--space-md) var(--space-xl); font-size: 1.125rem;">
+      <span role="img" aria-label="login">🚪</span>
+      ورود با حساب باسلام
+    </a>
+  </div>
+  {% endif %}
+</section>
+
+{% if is_logged_in %}
+<section class="card" style="margin-top: var(--space-lg);">
+  <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg);">
+    <span role="img" aria-label="user" style="font-size: 2rem;">👤</span>
+    <div>
+      <h3 class="h3">خوش آمدید، {{ user.get('name', user.get('username', 'کاربر عزیز')) }}!</h3>
+      <p class="muted">غرفه‌دار محترم باسلام</p>
+    </div>
+  </div>
+  
+  <div style="background: linear-gradient(135deg, var(--brand), var(--brand-hover)); color: white; border-radius: var(--radius-lg); padding: var(--space-lg); text-align: center;">
+    <p style="margin: 0; font-size: 1.125rem;">
+      <span role="img" aria-label="party">🎉</span>
+      شما آماده شرکت در کمپین‌های تخفیف هستید!
+    </p>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Add smooth scroll animation
+  const buttons = document.querySelectorAll('.btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transform = 'translateY(-2px) scale(1.02)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = 'translateY(0) scale(1)';
+    });
+  });
+});
+</script>
+{% endblock %}

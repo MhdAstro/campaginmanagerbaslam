@@ -1,19 +1,19 @@
 :root {
-  /* Modern Color Palette */
-  --bg: #0a0a0f;
-  --card: #1a1a2e;
-  --card-hover: #252547;
-  --text: #ffffff;
-  --text-secondary: #b8b8d1;
-  --muted: #6b7280;
-  --brand: #6366f1;
-  --brand-hover: #4f46e5;
-  --accent: #10b981;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --success: #10b981;
-  --line: #2d3748;
-  --border: #374151;
+  /* Basalam Color Palette */
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --card-hover: #f1f5f9;
+  --text: #1e293b;
+  --text-secondary: #64748b;
+  --muted: #94a3b8;
+  --brand: #e11d48;
+  --brand-hover: #be185d;
+  --accent: #059669;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --success: #059669;
+  --line: #e2e8f0;
+  --border: #cbd5e1;
   
   /* Spacing */
   --space-xs: 0.25rem;
@@ -71,11 +71,12 @@ html {
 .topbar {
   position: sticky;
   top: 0;
-  background: rgba(26, 26, 46, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px) saturate(1.2);
   border-bottom: 1px solid var(--border);
   z-index: 1000;
   transition: var(--transition);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .topbar .container {
@@ -100,7 +101,7 @@ html {
   background: var(--card);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border);
   transition: var(--transition);
   position: relative;

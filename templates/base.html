@@ -32,13 +32,23 @@
   <header class="topbar">
     <div class="container">
       <div class="brand">
-        <span role="img" aria-label="store">🏪</span>
-        Basalam Vendor Portal
+        <a href="{{ url_for('welcome') }}" style="text-decoration: none; color: inherit;">
+          <span role="img" aria-label="store">🏪</span>
+          پورتال غرفه‌داران باسلام
+        </a>
       </div>
-      <nav>
+      <nav style="display: flex; align-items: center; gap: var(--space-md);">
         {% if session.get('access_token') %}
           <div style="display: flex; align-items: center; gap: var(--space-md);">
-            <div style="display: flex; align-items: center; gap: var(--space-xs);">
+            <a href="{{ url_for('campaigns') }}" class="btn ghost">
+              <span role="img" aria-label="campaigns">📋</span>
+              کمپین‌ها
+            </a>
+            <a href="{{ url_for('rules') }}" class="btn ghost">
+              <span role="img" aria-label="rules">📜</span>
+              قوانین
+            </a>
+            <div style="display: flex; align-items: center; gap: var(--space-xs); margin-right: var(--space-md);">
               <span role="img" aria-label="user">👤</span>
               <span class="muted" style="font-size: 0.875rem;">
                 {{ (user and (user.name or user.username)) or 'کاربر' }}
@@ -50,10 +60,16 @@
             </a>
           </div>
         {% else %}
-          <a href="/login" class="btn">
-            <span role="img" aria-label="login">🔑</span>
-            ورود با باسلام
-          </a>
+          <div style="display: flex; align-items: center; gap: var(--space-md);">
+            <a href="{{ url_for('rules') }}" class="btn ghost">
+              <span role="img" aria-label="rules">📜</span>
+              قوانین
+            </a>
+            <a href="/login" class="btn">
+              <span role="img" aria-label="login">🔑</span>
+              ورود با باسلام
+            </a>
+          </div>
         {% endif %}
       </nav>
     </div>

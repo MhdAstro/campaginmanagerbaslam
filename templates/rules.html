@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}قوانین و مقررات{% endblock %}
+{% block content %}
+
+<section class="card">
+  <div style="text-align: center; margin-bottom: var(--space-xl);">
+    <div style="font-size: 3rem; margin-bottom: var(--space-md);">📜</div>
+    <h1 class="h1">قوانین و مقررات کمپین‌ها</h1>
+    <p class="muted" style="font-size: 1.125rem;">ضوابط شرکت در کمپین‌های تخفیف باسلام</p>
+  </div>
+</section>
+
+<section class="card" style="margin-top: var(--space-lg);">
+  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg);">
+    <span role="img" aria-label="discount" style="font-size: 1.5rem;">💰</span>
+    <h2 class="h2" style="color: var(--brand);">ضوابط تخفیف</h2>
+  </div>
+  
+  <div style="background: var(--card-hover); border-radius: var(--radius-md); padding: var(--space-lg); margin-bottom: var(--space-md);">
+    <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+      <span style="background: var(--brand); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: bold;">!</span>
+      <h3 style="margin: 0; color: var(--brand);">حداقل میزان تخفیف</h3>
+    </div>
+    <p style="margin: 0; line-height: 1.8; color: var(--text);">
+      تمامی محصولات شرکت‌کننده در کمپین‌ها باید حداقل <strong style="color: var(--brand);">۳ درصد تخفیف</strong> داشته باشند. 
+      تخفیف‌های کمتر از این میزان قابل قبول نیست و سیستم اجازه ثبت آن‌ها را نمی‌دهد.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-md);">
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-md);">
+      <div style="display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-sm);">
+        <span style="color: var(--accent);">✅</span>
+        <strong>مجاز</strong>
+      </div>
+      <ul style="margin: 0; padding-right: var(--space-lg); color: var(--text-secondary);">
+        <li>تخفیف ۳ درصد</li>
+        <li>تخفیف ۵ درصد</li>
+        <li>تخفیف ۱۰ درصد و بیشتر</li>
+      </ul>
+    </div>
+    
+    <div style="border: 1px solid var(--danger); border-radius: var(--radius-md); padding: var(--space-md); background: rgba(220, 38, 38, 0.05);">
+      <div style="display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-sm);">
+        <span style="color: var(--danger);">❌</span>
+        <strong style="color: var(--danger);">غیرمجاز</strong>
+      </div>
+      <ul style="margin: 0; padding-right: var(--space-lg); color: var(--text-secondary);">
+        <li>تخفیف ۱ درصد</li>
+        <li>تخفیف ۲ درصد</li>
+        <li>عدم تخفیف (۰ درصد)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="card" style="margin-top: var(--space-lg);">
+  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg);">
+    <span role="img" aria-label="cancel" style="font-size: 1.5rem;">🚫</span>
+    <h2 class="h2" style="color: var(--danger);">ضوابط لغو سفارش</h2>
+  </div>
+  
+  <div style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05)); border: 1px solid rgba(220, 38, 38, 0.2); border-radius: var(--radius-lg); padding: var(--space-lg);">
+    <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+      <span style="background: var(--danger); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">⚠️</span>
+      <h3 style="margin: 0; color: var(--danger);">قانون مهم لغو سفارش</h3>
+    </div>
+    
+    <div style="background: white; border-radius: var(--radius-md); padding: var(--space-lg); margin-bottom: var(--space-md);">
+      <p style="margin: 0; font-size: 1.125rem; line-height: 1.8; color: var(--text); text-align: center;">
+        <strong>محصولات شرکت‌کننده در کمپین‌ها نباید هیچ‌گونه کنسلی داشته باشند.</strong>
+      </p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-md);">
+      <div>
+        <h4 style="color: var(--danger); margin-bottom: var(--space-sm);">
+          <span role="img" aria-label="prohibited">🚨</span>
+          موارد ممنوع
+        </h4>
+        <ul style="color: var(--text-secondary); padding-right: var(--space-lg); line-height: 1.8;">
+          <li>لغو سفارش از طرف فروشنده</li>
+          <li>عدم ارسال محصول</li>
+          <li>ارسال محصول نامطابق</li>
+          <li>تاخیر غیرمجاز در ارسال</li>
+        </ul>
+      </div>
+      
+      <div>
+        <h4 style="color: var(--accent); margin-bottom: var(--space-sm);">
+          <span role="img" aria-label="required">✅</span>
+          الزامات
+        </h4>
+        <ul style="color: var(--text-secondary); padding-right: var(--space-lg); line-height: 1.8;">
+          <li>تحویل به موقع سفارش</li>
+          <li>کیفیت مطابق توضیحات</li>
+          <li>بسته‌بندی مناسب</li>
+          <li>پشتیبانی مناسب مشتری</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card" style="margin-top: var(--space-lg);">
+  <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-lg);">
+    <span role="img" aria-label="terms" style="font-size: 1.5rem;">📋</span>
+    <h2 class="h2">سایر قوانین</h2>
+  </div>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--space-lg);">
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-lg);">
+      <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+        <span style="color: var(--brand);">🛍️</span>
+        <h3 style="margin: 0;">انتخاب محصولات</h3>
+      </div>
+      <ul style="color: var(--text-secondary); padding-right: var(--space-lg); line-height: 1.8;">
+        <li>محصولات باید در انبار موجود باشند</li>
+        <li>تصاویر و توضیحات محصولات باید کامل باشد</li>
+        <li>قیمت‌ها باید به‌روز و صحیح باشد</li>
+      </ul>
+    </div>
+    
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-lg);">
+      <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+        <span style="color: var(--accent);">⏰</span>
+        <h3 style="margin: 0;">زمان‌بندی</h3>
+      </div>
+      <ul style="color: var(--text-secondary); padding-right: var(--space-lg); line-height: 1.8;">
+        <li>انتخاب محصولات قبل از شروع کمپین</li>
+        <li>عدم امکان تغییر در طول کمپین</li>
+        <li>رعایت مهلت‌های اعلام‌شده</li>
+      </ul>
+    </div>
+    
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-lg); padding: var(--space-lg);">
+      <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);">
+        <span style="color: var(--warning);">🎯</span>
+        <h3 style="margin: 0;">کیفیت خدمات</h3>
+      </div>
+      <ul style="color: var(--text-secondary); padding-right: var(--space-lg); line-height: 1.8;">
+        <li>حفظ استانداردهای کیفی باسلام</li>
+        <li>پاسخگویی سریع به مشتریان</li>
+        <li>رعایت اصول تجاری</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="card" style="margin-top: var(--space-lg);">
+  <div style="background: linear-gradient(135deg, var(--accent), #047857); color: white; border-radius: var(--radius-lg); padding: var(--space-xl); text-align: center;">
+    <h3 style="margin: 0 0 var(--space-md); font-size: 1.25rem;">
+      <span role="img" aria-label="success">🎉</span>
+      با رعایت این قوانین، موفقیت خود را تضمین کنید!
+    </h3>
+    <p style="margin: 0; opacity: 0.9; line-height: 1.6;">
+      تیم باسلام همیشه در کنار شما است و از موفقیت شما حمایت می‌کند.
+    </p>
+  </div>
+</section>
+
+<section class="card" style="margin-top: var(--space-lg);">
+  <div style="text-align: center;">
+    <a href="{{ url_for('campaigns') }}" class="btn" style="padding: var(--space-md) var(--space-xl); font-size: 1.125rem;">
+      <span role="img" aria-label="campaigns">📋</span>
+      مشاهده کمپین‌های فعال
+    </a>
+    <a href="{{ url_for('welcome') }}" class="btn ghost" style="padding: var(--space-md) var(--space-xl); font-size: 1.125rem; margin-right: var(--space-md);">
+      <span role="img" aria-label="home">🏠</span>
+      بازگشت به صفحه اصلی
+    </a>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Add scroll animation
+  const cards = document.querySelectorAll('.card');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.transform = 'translateY(0)';
+        entry.target.style.opacity = '1';
+      }
+    });
+  }, { threshold: 0.1 });
+  
+  cards.forEach((card, index) => {
+    card.style.transform = 'translateY(20px)';
+    card.style.opacity = '0';
+    card.style.transition = `all 0.6s ease ${index * 0.1}s`;
+    observer.observe(card);
+  });
+});
+</script>
+{% endblock %}

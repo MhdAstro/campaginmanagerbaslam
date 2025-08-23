@@ -11,6 +11,7 @@ from flask import (
 import requests
 import csv
 from io import StringIO, BytesIO
+import khayyam
 
 load_dotenv()
 
@@ -35,6 +36,61 @@ SCOPES        = os.getenv("BASALAM_SCOPES", "customer.profile.read vendor.produc
 ADMIN_PHONES = {"09121969038", "09226807545"}
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "app.db")
+
+# Jalali date helper functions
+def gregorian_to_jalali(g_date):
+    """Convert Gregorian date to Jalali"""
+    if isinstance(g_date, str):
+        try:
+            g_date = date.fromisoformat(g_date)
+        except:
+            return g_date
+    
+    try:
+        j_date = khayyam.JalaliDate.from_date(g_date)
+        return j_date.strftime("%Y/%m/%d")
+    except:
+        return str(g_date)
+
+def jalali_to_gregorian(j_date_str):
+    """Convert Jalali date string to Gregorian date"""
+    try:
+        # Parse Jalali date string (format: YYYY/MM/DD)
+        parts = j_date_str.split('/')
+        if len(parts) == 3:
+            j_year, j_month, j_day = map(int, parts)
+            j_date = khayyam.JalaliDate(j_year, j_month, j_day)
+            return j_date.to_date()
+        return None
+    except:
+        return None
+
+def format_jalali_date(g_date):
+    """Format Gregorian date as Persian with month names"""
+    if isinstance(g_date, str):
+        try:
+            g_date = date.fromisoformat(g_date)
+        except:
+            return g_date
+    
+    try:
+        j_date = khayyam.JalaliDate.from_date(g_date)
+        month_names = [
+            "", "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+            "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+        ]
+        return f"{j_date.day} {month_names[j_date.month]} {j_date.year}"
+    except:
+        return str(g_date)
+
+# Add Jinja2 filters for date formatting
+@app.template_filter('jalali')
+def jalali_filter(g_date):
+    return gregorian_to_jalali(g_date)
+
+@app.template_filter('jalali_pretty')
+def jalali_pretty_filter(g_date):
+    return format_jalali_date(g_date)
 
 def get_db():
     if "db" not in g:
@@ -92,6 +148,19 @@ def ensure_admin():
 # Pages
 @app.route("/")
 def index():
+    return redirect(url_for("welcome"))
+
+@app.route("/welcome")
+def welcome():
+    return render_template(
+        "welcome.html",
+        is_logged_in=is_logged_in(),
+        is_admin=is_admin(),
+        user=session.get("user"),
+    )
+
+@app.route("/campaigns")
+def campaigns():
     db = get_db()
     rows = db.execute(
         "SELECT * FROM campaigns ORDER BY date(start_date) DESC"
@@ -116,6 +185,10 @@ def index():
         now=date.today(),
         user=session.get("user"),
     )
+
+@app.route("/rules")
+def rules():
+    return render_template("rules.html")
 
 
 @app.route("/campaign/<int:cid>")
@@ -196,12 +269,12 @@ def auth_callback():
     session["is_admin"] = phone in ADMIN_PHONES
 
     flash("ورود موفق.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("welcome"))
 
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("index"))
+    return redirect(url_for("welcome"))
 
 @app.route("/sw.js")
 def service_worker():
@@ -217,7 +290,7 @@ def admin_create_campaign():
     end_date = request.form.get("end_date","").strip()
     if not title or not start_date or not end_date:
         flash("همهٔ فیلدهای ضروری را پر کنید.", "danger")
-        return redirect(url_for("index"))
+        return redirect(url_for("campaigns"))
     db = get_db()
     db.execute(
         "INSERT INTO campaigns (title, description, start_date, end_date) VALUES (?,?,?,?)",
@@ -225,7 +298,29 @@ def admin_create_campaign():
     )
     db.commit()
     flash("کمپین ایجاد شد.", "success")
-    return redirect(url_for("index"))
+    return redirect(url_for("campaigns"))
+
+# Admin: delete campaign
+@app.route("/admin/campaigns/<int:cid>/delete", methods=["POST"])
+def admin_delete_campaign(cid: int):
+    ensure_admin()
+    db = get_db()
+    
+    # Check if campaign exists
+    campaign = db.execute("SELECT * FROM campaigns WHERE id=?", (cid,)).fetchone()
+    if not campaign:
+        flash("کمپین یافت نشد.", "danger")
+        return redirect(url_for("campaigns"))
+    
+    # Delete related campaign items first
+    db.execute("DELETE FROM campaign_items WHERE campaign_id=?", (cid,))
+    
+    # Delete campaign
+    db.execute("DELETE FROM campaigns WHERE id=?", (cid,))
+    db.commit()
+    
+    flash(f"کمپین '{campaign['title']}' حذف شد.", "success")
+    return redirect(url_for("campaigns"))
 
 # APIs
 @app.route("/api/campaigns")
@@ -422,7 +517,7 @@ def api_admin_export_csv(cid: int):
 
 @app.route("/dashboard")
 def dashboard():
-    return redirect(url_for("index"))
+    return redirect(url_for("welcome"))
 
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)
